@@ -121,7 +121,6 @@ struct ContentView: View {
 
     var bottomBar: some View {
         VStack(spacing: 10) {
-            // Archive name
             HStack(spacing: 8) {
                 Image(systemName: "doc.badge.plus")
                     .foregroundStyle(.secondary)
@@ -133,10 +132,8 @@ struct ContentView: View {
                     .fontWeight(.medium)
             }
 
-            // Status
             statusRow
 
-            // Buttons
             HStack {
                 if !droppedFiles.isEmpty {
                     Button("Clear") {
@@ -212,7 +209,6 @@ struct ContentView: View {
                     guard !droppedFiles.contains(url) else { return }
                     droppedFiles.append(url)
                     status = .idle
-                    // Auto-name from first file dropped
                     if droppedFiles.count == 1 {
                         archiveName = url.deletingPathExtension().lastPathComponent
                     }
@@ -222,12 +218,34 @@ struct ContentView: View {
         return true
     }
 
+    // Checks Mach-O magic bytes — skips placeholder text files
+    func isRealMachO(at path: String) -> Bool {
+        guard FileManager.default.isExecutableFile(atPath: path),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedIfSafe),
+              data.count >= 4 else { return false }
+        let magic = Array(data.prefix(4))
+        return magic == [0xCF, 0xFA, 0xED, 0xFE] || // arm64 / x86_64 little-endian
+               magic == [0xCE, 0xFA, 0xED, 0xFE] ||
+               magic == [0xFE, 0xED, 0xFA, 0xCF] ||
+               magic == [0xFE, 0xED, 0xFA, 0xCE] ||
+               magic == [0xCA, 0xFE, 0xBA, 0xBE]    // universal binary
+    }
+
+    // Bundled binary first (for distribution), then Homebrew fallback (for dev)
+    func resolveRarPath() -> String? {
+        if let bundled = Bundle.main.path(forResource: "rar", ofType: nil),
+           isRealMachO(at: bundled) {
+            return bundled
+        }
+        return ["/opt/homebrew/bin/rar", "/usr/local/bin/rar"]
+            .first { isRealMachO(at: $0) }
+    }
+
     func createRAR() {
         guard !droppedFiles.isEmpty else { return }
 
-        // rar binary is bundled inside the app
-        guard let rarPath = Bundle.main.path(forResource: "rar", ofType: nil) else {
-            status = .error("Bundled rar not found. See README to add it.")
+        guard let rarPath = resolveRarPath() else {
+            status = .error("rar not found. Run in Terminal: brew install rar")
             return
         }
 
@@ -241,7 +259,9 @@ struct ContentView: View {
         DispatchQueue.global(qos: .userInitiated).async {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: rarPath)
-            process.arguments = ["a", output.path] + droppedFiles.map(\.path)
+            // a    = add to archive
+            // -ep1 = strip absolute path, keep relative folder structure
+            process.arguments = ["a", "-ep1", output.path] + droppedFiles.map(\.path)
 
             let pipe = Pipe()
             process.standardOutput = pipe

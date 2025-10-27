@@ -11,6 +11,7 @@
 		AA11000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22000000000003 /* ContentView.swift */; };
 		AA11000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA22000000000004 /* Assets.xcassets */; };
 		AA11000000000004 /* rar in Resources */ = {isa = PBXBuildFile; fileRef = AA22000000000006 /* rar */; };
+		AA11000000000005 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22000000000007 /* AboutView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		AA22000000000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA22000000000005 /* macRAR.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macRAR.entitlements; sourceTree = "<group>"; };
 		AA22000000000006 /* rar */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = rar; sourceTree = "<group>"; };
+		AA22000000000007 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +47,7 @@
 			children = (
 				AA22000000000002 /* macRARApp.swift */,
 				AA22000000000003 /* ContentView.swift */,
+				AA22000000000007 /* AboutView.swift */,
 				AA22000000000004 /* Assets.xcassets */,
 				AA22000000000005 /* macRAR.entitlements */,
 				AA22000000000006 /* rar */,
@@ -144,6 +147,7 @@
 			files = (
 				AA11000000000001 /* macRARApp.swift in Sources */,
 				AA11000000000002 /* ContentView.swift in Sources */,
+				AA11000000000005 /* AboutView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -192,6 +196,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = macRAR;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -214,6 +219,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = macRAR;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
