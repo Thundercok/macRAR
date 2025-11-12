@@ -133,10 +133,12 @@
 			inputPaths = ();
 			name = "Fix rar permissions";
 			outputFileListPaths = ();
-			outputPaths = ();
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/rar-chmod.stamp",
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "chmod +x \"$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Resources/rar\"\n";
+			shellScript = "chmod +x \"$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Resources/rar\"\ntouch \"$DERIVED_FILE_DIR/rar-chmod.stamp\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
