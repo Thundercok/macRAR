@@ -3,89 +3,64 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @State private var droppedFiles: [URL] = []
-    @State private var isTargeted = false
-    @State private var archiveName = ""
-    @State private var status: Status = .idle
-    @State private var outputURL: URL? = nil
+    @State private var isTargeted   = false
+    @State private var archiveName  = ""
+    @State private var status: AppStatus = .idle
+    @State private var outputURL: URL?   = nil
     @State private var showAbout = false
 
-    enum Status: Equatable {
+    enum AppStatus: Equatable {
         case idle, working, done, error(String)
     }
 
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            // Seamless light background
-            Color(red: 0.97, green: 0.97, blue: 0.98)
-                .ignoresSafeArea()
+    let accentBlue = Color(red: 0.23, green: 0.49, blue: 0.96)
 
-            VStack(spacing: 0) {
-                titleBar
-                dropZone
-                bottomSection
-            }
+    var body: some View {
+        VStack(spacing: 0) {
+            titleBar
+            Divider()
+            dropZone
+            Divider()
+            bottomBar
         }
         .frame(width: 420)
+        .background(Color(NSColor.windowBackgroundColor))
         .sheet(isPresented: $showAbout) { AboutView() }
     }
 
-    // MARK: – Title bar
+    // MARK: - Title bar
 
     var titleBar: some View {
-        HStack(spacing: 9) {
-            // Custom icon — gradient rounded square
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(LinearGradient(
-                        colors: [Color(red:0.22, green:0.47, blue:0.95),
-                                 Color(red:0.14, green:0.35, blue:0.85)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 24, height: 24)
-                    .shadow(color: Color(red:0.18, green:0.38, blue:0.88).opacity(0.35),
-                            radius: 5, y: 2)
-                Image(systemName: "archivebox.fill")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-
+        HStack(spacing: 10) {
+            Image(systemName: "archivebox.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(accentBlue)
             Text("macRAR")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(white: 0.15))
-
+                .font(.system(size: 13, weight: .bold))
             Spacer()
-
             Button { showAbout = true } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(Color(white: 0.55))
+                Image(systemName: "info.circle")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
-            .help("About macRAR")
         }
         .padding(.horizontal, 18)
-        .padding(.top, 16)
-        .padding(.bottom, 12)
+        .padding(.vertical, 12)
     }
 
-    // MARK: – Drop zone
+    // MARK: - Drop zone
 
     var dropZone: some View {
         ZStack {
-            // Card
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(isTargeted ? 0.10 : 0.06),
-                        radius: isTargeted ? 16 : 10, y: isTargeted ? 6 : 3)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(
-                            isTargeted
-                                ? Color(red:0.22, green:0.47, blue:0.95).opacity(0.5)
-                                : Color.clear,
-                            lineWidth: 1.5
-                        )
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(NSColor.controlBackgroundColor))
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(
+                    isTargeted ? accentBlue : Color.secondary.opacity(0.3),
+                    style: StrokeStyle(lineWidth: 1.5, dash: isTargeted ? [] : [6, 3])
                 )
-                .animation(.easeInOut(duration: 0.18), value: isTargeted)
+                .animation(.easeInOut(duration: 0.15), value: isTargeted)
 
             if droppedFiles.isEmpty {
                 emptyHint
@@ -94,27 +69,22 @@ struct ContentView: View {
             }
         }
         .frame(minHeight: 190)
-        .padding(.horizontal, 14)
+        .padding(14)
         .onDrop(of: [.fileURL], isTargeted: $isTargeted, perform: handleDrop)
     }
 
     var emptyHint: some View {
-        VStack(spacing: 11) {
-            ZStack {
-                Circle()
-                    .fill(Color(red:0.22, green:0.47, blue:0.95).opacity(0.08))
-                    .frame(width: 56, height: 56)
-                Image(systemName: "arrow.down.doc")
-                    .font(.system(size: 22, weight: .light))
-                    .foregroundStyle(Color(red:0.22, green:0.47, blue:0.95).opacity(0.75))
-            }
+        VStack(spacing: 12) {
+            Image(systemName: isTargeted ? "arrow.down.doc.fill" : "arrow.down.doc")
+                .font(.system(size: 36, weight: .light))
+                .foregroundColor(isTargeted ? accentBlue : .secondary)
+                .animation(.easeInOut(duration: 0.15), value: isTargeted)
             VStack(spacing: 4) {
                 Text("Drop files or folders")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(white: 0.25))
-                Text("Everything goes into one .rar")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("All items combined into one .rar")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(white: 0.60))
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 28)
@@ -122,163 +92,103 @@ struct ContentView: View {
 
     var fileList: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 3) {
+            VStack(spacing: 4) {
                 ForEach(droppedFiles, id: \.self) { url in
                     HStack(spacing: 10) {
                         Image(systemName: url.hasDirectoryPath ? "folder.fill" : "doc.fill")
                             .font(.system(size: 13))
-                            .foregroundStyle(url.hasDirectoryPath
-                                             ? Color.orange.opacity(0.85)
-                                             : Color(red:0.22, green:0.47, blue:0.95).opacity(0.8))
+                            .foregroundColor(url.hasDirectoryPath ? .orange : accentBlue)
                             .frame(width: 20)
-
-                        Text(url.lastPathComponent)
-                            .font(.system(size: 12.5))
-                            .foregroundStyle(Color(white: 0.2))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(url.lastPathComponent)
+                                .font(.system(size: 12.5, weight: .medium))
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Text(url.hasDirectoryPath ? "Folder" : url.pathExtension.uppercased() + " File")
+                                .font(.system(size: 10.5))
+                                .foregroundColor(.secondary)
+                        }
                         Spacer()
-
                         Button {
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                droppedFiles.removeAll { $0 == url }
-                                if droppedFiles.isEmpty { status = .idle }
-                            }
+                            droppedFiles.removeAll { $0 == url }
+                            if droppedFiles.isEmpty { status = .idle }
                         } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 9, weight: .semibold))
-                                .foregroundStyle(Color(white: 0.55))
-                                .frame(width: 18, height: 18)
-                                .background(Color(white: 0.91), in: Circle())
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary.opacity(0.5))
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background(Color(white: 0.975), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color(NSColor.windowBackgroundColor))
+                    .cornerRadius(8)
                 }
             }
-            .padding(12)
+            .padding(10)
         }
         .frame(maxHeight: 190)
     }
 
-    // MARK: – Bottom section
+    // MARK: - Bottom bar
 
-    var bottomSection: some View {
-        VStack(spacing: 0) {
-            // Thin separator
-            Rectangle()
-                .fill(Color.black.opacity(0.06))
-                .frame(height: 0.5)
-                .padding(.horizontal, 14)
-
-            VStack(spacing: 10) {
-                // Name field
-                HStack(spacing: 0) {
-                    TextField("Name your archive", text: $archiveName)
-                        .font(.system(size: 13))
-                        .textFieldStyle(.plain)
-                        .padding(.leading, 12)
-                        .padding(.vertical, 9)
-
-                    Text(".rar")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color(white: 0.50))
-                        .padding(.trailing, 12)
-                }
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.black.opacity(0.09), lineWidth: 1)
-                )
-
-                // Status
-                if status != .idle {
-                    statusRow
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-
-                // Buttons
-                HStack(spacing: 8) {
-                    if !droppedFiles.isEmpty {
-                        Button("Clear") {
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                droppedFiles = []
-                                status = .idle
-                                outputURL = nil
-                                archiveName = ""
-                            }
-                        }
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color(white: 0.4))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 9)
-                        .background(Color.white, in: RoundedRectangle(cornerRadius: 10))
-                        .overlay(RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color.black.opacity(0.09), lineWidth: 1))
-                        .buttonStyle(.plain)
-                    }
-
-                    Spacer()
-
-                    Button(action: createRAR) {
-                        HStack(spacing: 7) {
-                            if status == .working {
-                                ProgressView()
-                                    .scaleEffect(0.70)
-                                    .tint(.white)
-                            } else {
-                                Image(systemName: "archivebox.fill")
-                                    .font(.system(size: 12))
-                            }
-                            Text(createButtonLabel)
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 9)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(droppedFiles.isEmpty || status == .working
-                                    ? LinearGradient(colors: [Color(white:0.78), Color(white:0.73)],
-                                                     startPoint: .top, endPoint: .bottom)
-                                    : LinearGradient(colors: [Color(red:0.25, green:0.50, blue:0.97),
-                                                              Color(red:0.16, green:0.37, blue:0.87)],
-                                                     startPoint: .top, endPoint: .bottom))
-                        )
-                        .shadow(color: droppedFiles.isEmpty ? .clear
-                                : Color(red:0.18, green:0.38, blue:0.88).opacity(0.30),
-                                radius: 6, y: 3)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(droppedFiles.isEmpty || status == .working)
-                    .animation(.easeInOut(duration: 0.15), value: droppedFiles.isEmpty)
-                }
+    var bottomBar: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "doc.badge.plus")
+                    .foregroundColor(.secondary)
+                    .font(.system(size: 12))
+                TextField("Name your archive", text: $archiveName)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 13))
+                Text(".rar")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.secondary)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
-            .padding(.bottom, 10)
-            .animation(.easeOut(duration: 0.2), value: status)
 
-            // Credit
+            if status != .idle { statusRow }
+
+            HStack {
+                if !droppedFiles.isEmpty {
+                    Button("Clear") {
+                        droppedFiles = []
+                        status = .idle
+                        outputURL = nil
+                        archiveName = ""
+                    }
+                    .buttonStyle(.bordered)
+                }
+                Spacer()
+                Button(action: createRAR) {
+                    HStack(spacing: 6) {
+                        if status == .working {
+                            ProgressView().scaleEffect(0.75).tint(.white)
+                        } else {
+                            Image(systemName: "archivebox.fill")
+                                .font(.system(size: 12))
+                        }
+                        Text(createButtonLabel)
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(droppedFiles.isEmpty || status == .working)
+            }
+
             HStack {
                 Button { showAbout = true } label: {
                     Text("Made with love, Nigasaka")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color(white: 0.68))
+                        .font(.system(size: 10.5))
+                        .foregroundColor(Color.secondary.opacity(0.7))
                 }
                 .buttonStyle(.plain)
-                .help("About macRAR")
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
         }
+        .padding(14)
     }
 
-    // MARK: – Status row
+    // MARK: - Status row
 
     @ViewBuilder
     var statusRow: some View {
@@ -286,42 +196,28 @@ struct ContentView: View {
         case .idle:
             EmptyView()
         case .working:
-            HStack(spacing: 6) {
-                Image(systemName: "hourglass")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color(white: 0.55))
-                Text("Creating archive…")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(white: 0.50))
-            }
+            Label("Creating archive…", systemImage: "hourglass")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
         case .done:
             HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle.fill")
+                Label("Saved to Desktop", systemImage: "checkmark.circle.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(red:0.18, green:0.72, blue:0.45))
-                Text("Saved to Desktop")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(white: 0.35))
+                    .foregroundColor(.green)
                 if let url = outputURL {
-                    Text("·").foregroundStyle(Color(white:0.7))
-                    Button("Show in Finder") {
+                    Text("·").foregroundColor(.secondary)
+                    Button("Reveal in Finder") {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
                     }
                     .font(.system(size: 12))
                     .buttonStyle(.link)
-                    .foregroundStyle(Color(red:0.22, green:0.47, blue:0.95))
                 }
             }
         case .error(let msg):
-            HStack(spacing: 6) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.red)
-                Text(msg)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.red.opacity(0.85))
-                    .lineLimit(2)
-            }
+            Label(msg, systemImage: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.red)
+                .lineLimit(2)
         }
     }
 
@@ -333,7 +229,7 @@ struct ContentView: View {
         }
     }
 
-    // MARK: – Logic
+    // MARK: - Logic
 
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         for p in providers {
@@ -357,10 +253,10 @@ struct ContentView: View {
         guard FileManager.default.isExecutableFile(atPath: path),
               let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedIfSafe),
               data.count >= 4 else { return false }
-        let magic = Array(data.prefix(4))
-        return magic == [0xCF,0xFA,0xED,0xFE] || magic == [0xCE,0xFA,0xED,0xFE] ||
-               magic == [0xFE,0xED,0xFA,0xCF] || magic == [0xFE,0xED,0xFA,0xCE] ||
-               magic == [0xCA,0xFE,0xBA,0xBE]
+        let m = Array(data.prefix(4))
+        return m == [0xCF,0xFA,0xED,0xFE] || m == [0xCE,0xFA,0xED,0xFE] ||
+               m == [0xFE,0xED,0xFA,0xCF] || m == [0xFE,0xED,0xFA,0xCE] ||
+               m == [0xCA,0xFE,0xBA,0xBE]
     }
 
     func resolveRarPath() -> String? {
@@ -369,13 +265,14 @@ struct ContentView: View {
     }
 
     func createRAR() {
-        guard !droppedFiles.isEmpty, let rarPath = resolveRarPath() else {
-            if resolveRarPath() == nil { status = .error("rar not found — run: brew install rar") }
+        guard !droppedFiles.isEmpty else { return }
+        guard let rarPath = resolveRarPath() else {
+            status = .error("rar not found — run: brew install rar")
             return
         }
         let name = archiveName.trimmingCharacters(in: .whitespaces).isEmpty ? "archive" : archiveName
         let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
-        let output = desktop.appendingPathComponent("\(name).rar")
+        let output  = desktop.appendingPathComponent("\(name).rar")
         status = .working
 
         DispatchQueue.global(qos: .userInitiated).async {
@@ -389,10 +286,10 @@ struct ContentView: View {
                 DispatchQueue.main.async {
                     if p.terminationStatus == 0 {
                         outputURL = output
-                        withAnimation(.spring(response: 0.35)) { status = .done }
+                        withAnimation { status = .done }
                     } else {
                         let msg = String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
-                                         encoding: .utf8) ?? "Unknown error"
+                                        encoding: .utf8) ?? "Unknown error"
                         status = .error(String(msg.prefix(100)))
                     }
                 }
