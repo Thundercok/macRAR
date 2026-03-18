@@ -34,16 +34,6 @@ The app is now fully self-contained — the `rar` binary is bundled inside.
 
 ---
 
-## Giving it to your girlfriend
-
-1. In Xcode: **Product → Archive → Distribute App → Copy App**
-2. Send her the `.app` file
-3. She drags it to Applications
-4. First launch: right-click → Open (just the first time, to pass Gatekeeper)
-
-She never needs Terminal, Homebrew, or anything. It just works. ✅
-
----
 
 ## Requirements
 - macOS 13 Ventura or later
